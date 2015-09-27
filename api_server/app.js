@@ -8,6 +8,7 @@ var expressValidator = require('express-validator');
 var cors = require('cors');
 
 var app = express();
+var basicLogin = require('./functions/logic/basic');
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -26,8 +27,17 @@ app.set('view engine', 'jade');
 
 //route the request
 app.use('/api/v1/', routes);
+app.use('/signup', basicLogin.signUp);
+app.use('/login', basicLogin.loginUser);
+app.use('/getAllUsers', basicLogin.getAllUsers);
+
+
+
 app.use('/',function(req,res){
-	res.send('this is home');
+	res.json(
+		{
+		"name":"hello World"
+		});
 });
 
 // catch 404 and forward to respective handler

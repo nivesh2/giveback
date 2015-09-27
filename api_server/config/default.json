@@ -1,3 +1,7 @@
 {	
-	"connectionString":"postgres://awsuser:#myCloud7@mydbinstance.ceu1yxehnwxm.us-west-2.rds.amazonaws.com:5432/mydb"
+	"host":"codefinal.ceu1yxehnwxm.us-west-2.rds.amazonaws.com";
+	"port":"3306",
+	"username":"nivesh",
+	"password":"just_4_now",
+	"db":"volunteerforindia"
 }

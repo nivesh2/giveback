@@ -1,8 +1,12 @@
 var express = require('express');
 var router = express.Router();
 
-var record = require('../functions/logic/record');
+var volunteer = require('../functions/logic/volunteer');
 
-router.use('/getAllData',record.read);
+router.use('/volunteer/getProjects',volunteer.getProjects);
+
+router.use('/volunteer/profile',volunteer.profile);
+router.use('/volunteer/editProfile',volunteer.editProfile);
+
 
 module.exports = router;

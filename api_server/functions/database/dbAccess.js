@@ -1,35 +1,154 @@
 var mysql = require('mysql');
-var config = require('config');
-var conString = config.get('connectionString');
 
 var connectionpool = mysql.createPool({
-    host     : 'localhost',
-    user     : 'root',
-    password : '',
-    database : 'cfiapp'
+    host:"codefinal.ceu1yxehnwxm.us-west-2.rds.amazonaws.com",
+	user :"nivesh",
+	password:"just_4_now",
+    database :"volunteerforindia"
 });
 
 var volunteer_functions = {
-    getAll : function(req, res){
-    connectionpool.getConnection(function(err, connection) {
+    
+    login : function(data,cb){
+        connectionpool.getConnection(function(err, connection) {
             if (err) {
                 console.error('CONNECTION error: ',err);
-                res.statusCode = 503;
-                res.send({
-                    result: 'error',
-                    err:    err.code
+                cb({result: 'failure',
+                    err:'Sorry'
                 });
             } else {
-                connection.query('SELECT * FROM volunteer_master',function(err,rows){
+                var q='';
+                if(data.type === 'volunteer'){
+                    q="SELECT * from volunteer_master where email=? and password=?";    
+                }else{
+                    q="SELECT * from ngo_master where email=? and password=?";
+                }
+                var a=data.email;
+                var b = data.password;
+                console.log(a,b);
+                var query = connection.query(q,[a,b], function(err, rows){
+                    if(err){
+                        console.log(err);
+                        cb({result: 'failure',
+                        err:'Sorry'
+                        });
+                     }
+                    console.log('14 '+rows);
+                    if(rows.length !== 0){
+                        cb({
+                        result: 'success',
+                        json : rows
+                        });
+                    }else{
+                        cb({
+                            result: 'failure',
+                            message: 'invalid email and password'
+                        });
+                        }
+                    connection.release();
+                });
+            }
+        });
+    },
+    getProjects : function(data,cb){
+         connectionpool.getConnection(function(err, connection) {
+            if (err) {
+                console.error('CONNECTION error: ',err);
+                cb({result: 'failure',
+                    err:'Sorry'
+                });
+            } else {
+                var q="select a.project_name, a.start_date, a.location, a.project_status, b.skill_name, c.cause_name, d.name from project a, skill b, causes c, ngo_master d where a.cause_id in (select cause_id from volunteer_causes where volunteer_id in (select volunteer_id from volunteer_master where email = 'a@a.com')) and a.ngo_id = d.ngo_id and b.skill_id = a.skill_id and a.cause_id = c.cause_id;";
+               
+                connection.query(q,function(err,rows){
                     if(err){
                         console.error(err);
-                        res.statusCode = 500;
-                        res.send({
-                            result: 'error',
-                            err:    err.code
+                        cb({result: 'failure',
+                           err:'Sorry'
+                        });
+                    }else{
+                        console.log('db success',rows);
+                        cb({
+                            "result":"success",
+                            "project":rows
                         });
                     }
-                    res.send({
+                    connection.release();
+                });
+            }
+    });
+    },
+    profile : function(data,cb){
+        connectionpool.getConnection(function(err, connection) {
+            if (err) {
+                console.error('CONNECTION error: ',err);
+                cb({result: 'failure',
+                    err:'Sorry'
+                });
+            } else {
+                connection.query('select * from volunteer_master where email = ?)',data.email,function(err,rows){
+                    if(err){
+                        console.error(err);
+                        cb({result: 'failure',
+                           err:'Sorry'
+                        });
+                    }
+                    console.log('db success');
+                    cb({
+                        result: 'success',
+                        err:    '',
+                        json:   rows
+                    });
+                    connection.release();
+                });
+            }
+    });
+    },
+    
+    editProfile : function(data,cb){
+         connectionpool.getConnection(function(err, connection) {
+            if (err) {
+                console.error('CONNECTION error: ',err);
+                cb({result: 'failure',
+                    err:'Sorry'
+                });
+            } else {
+                connection.query('select * from volunteer_master where email = ?)',data,function(err,rows){
+                    if(err){
+                        console.error(err);
+                        cb({result: 'failure',
+                           err:'Sorry'
+                        });
+                    }
+                    console.log('db success');
+                    cb({
+                        result: 'success',
+                        err:    '',
+                        json:   rows
+                    });
+                    connection.release();
+                });
+            }
+    });
+    },
+    
+    causes: function(data,cb){
+          connectionpool.getConnection(function(err, connection) {
+            if (err) {
+                console.error('CONNECTION error: ',err);
+                cb({result: 'failure',
+                    err:'Sorry'
+                });
+            } else {
+                connection.query('SELECT * FROM cause c,volunteer_causes v where c.cause_id = v.volunteer_id and v.email =? ',data.email,function(err,rows){
+                    if(err){
+                        console.error(err);
+                        cb({result: 'failure',
+                           err:'Sorry'
+                        });
+                    }
+                    console.log('db success');
+                    cb({
                         result: 'success',
                         err:    '',
                         json:   rows,
@@ -38,7 +157,63 @@ var volunteer_functions = {
                     connection.release();
                 });
             }
-    });
+        });
+    
+    },
+    myProjects: function(data,cb){
+          connectionpool.getConnection(function(err, connection) {
+            if (err) {
+                console.error('CONNECTION error: ',err);
+                cb({result: 'failure',
+                    err:'Sorry'
+                });
+            } else {
+                connection.query('SELECT * FROM cause c,volunteer_causes v where c.cause_id = v.volunteer_id and v.email =? ',data.email,function(err,rows){
+                    if(err){
+                        console.error(err);
+                        cb({result: 'failure',
+                           err:'Sorry'
+                        });
+                    }
+                    console.log('db success');
+                    cb({
+                        result: 'success',
+                        err:    '',
+                        json:   rows,
+                        length: rows.length
+                    });
+                    connection.release();
+                });
+            }
+        });
+    },
+    getAll : function(data,cb){
+   
+    connectionpool.getConnection(function(err, connection) {
+            if (err) {
+                console.error('CONNECTION error: ',err);
+                cb({result: 'failure',
+                    err:'Sorry'
+                });
+            } else {
+                connection.query('SELECT * FROM volunteer_master',function(err,rows){
+                    if(err){
+                        console.error(err);
+                        cb({result: 'failure',
+                           err:'Sorry'
+                        });
+                    }
+                    console.log('db success');
+                    cb({
+                        result: 'success',
+                        err:    '',
+                        json:   rows,
+                        length: rows.length
+                    });
+                    connection.release();
+                });
+            }
+        });
     
     },
     
@@ -76,126 +251,105 @@ var volunteer_functions = {
     },
     
     /*Save the customer*/
-    add : function(req,res){
-        console.log("inside volunteer add");
-        var input = JSON.parse(JSON.stringify(req.body));
+    add : function(d,cb){
+        console.log("inside volunteer add" , d);
+        var input = JSON.parse(JSON.stringify(d));
         var data = {
-                first_name    : input.data.first_name,
-                last_name : input.data.last_name,
-                email : input.data.email,
-                mob : input.data.mob,
-                password : input.data.password,
-                gender : input.data.gender,
-                dob : input.data.dob,
-                address : input.data.address,
-                city : input.data.city,
-                state : input.data.state,
-                image_url : input.data.state
+                name: input.name,
+                email: input.email,
+                mob: input.mob,
+                city:input.city,
+                adhaar_number:input.adhaar_number,
+                password:input.password
         };
         connectionpool.getConnection(function(err, connection) {
             if (err) {
                 console.error('CONNECTION error: ',err);
-                res.statusCode = 503;
-                res.send({
-                    result: 'error',
-                    err:    err.code
+                cb({result: 'failure',
+                    err:'Sorry'
                 });
             } else {
                 var query = connection.query("INSERT INTO volunteer_master set ? ",data, function(err, rows){
                     if(err){
-                        console.error(err);
-                        res.statusCode = 500;
-                        res.send({
-                            result: 'error',
-                            err:    err.code
-                        });
-                    }
-                    res.send({
-                        result: 'success',
-                        err:    '',
-                        json:   rows
+                    console.error(err);
+                    cb({result: 'failure',
+                    err:'Sorry'
                     });
+                }
+                console.log('db success'+rows);
+                cb({
+                    result: 'success',
+                    err:    '',
+                    json:   rows
+                });
+                   
                     connection.release();
                 });
             }
         });
     },
     
-    save_edit : function(req,res){    
-        var input = JSON.parse(JSON.stringify(req.body));
-        var id = req.params.id;
+    getAllUsers : function(cb){
         connectionpool.getConnection(function(err, connection) {
             if (err) {
                 console.error('CONNECTION error: ',err);
-                res.statusCode = 503;
-                res.send({
-                    result: 'error',
-                    err:    err.code
+                cb({result: 'failure',
+                    err:'Sorry'
                 });
             } else {
-                var data = {
-                first_name    : input.first_name,
-                last_name : input.last_name,
-                email : input.email,
-                mob : input.mob,
-                password : input.password,
-                gender : input.gender,
-                dob : input.dob
-                };
-                connection.query("UPDATE volunteer_master set ? WHERE id = ? ",[data,id], function(err, rows){
+                var query = connection.query("Select * from volunteer_master", function(err, rows){
                     if(err){
                         console.error(err);
-                        res.statusCode = 500;
-                        res.send({
-                            result: 'error',
-                            err:    err.code
-                        });
-                    }
-                    res.send({
-                        result: 'success',
-                        err:    '',
-                        json:   rows,
-                        length: rows.length
+                        cb({result: 'failure',
+                        err:'Sorry'
                     });
+                }
+                console.log('db success'+rows);
+                cb({
+                    result: 'success',
+                    err:    '',
+                    json:   rows
+                });
+                   
                     connection.release();
                 });
             }
         });
     },
-    
-    
-    delete_customer : function(req,res){
-            
-        var id = req.params.id;
+    addCauses : function(d,cb){
+        console.log("inside volunteer add" , d);
+        var input = JSON.parse(JSON.stringify(d));
+        var data = {
+              volunteer_id : input.volunteer_id,
+              cause_id : input.cause_id
+        };
         connectionpool.getConnection(function(err, connection) {
             if (err) {
                 console.error('CONNECTION error: ',err);
-                res.statusCode = 503;
-                res.send({
-                    result: 'error',
-                    err:    err.code
+                cb({result: 'failure',
+                    err:'Sorry'
                 });
             } else {
-                connection.query("DELETE FROM volunteer_master  WHERE id = ? ",[id], function(err, rows){
+                var query = connection.query("INSERT INTO volunteer_causes set ? ",data, function(err, rows){
                     if(err){
-                        console.error(err);
-                        res.statusCode = 500;
-                        res.send({
-                            result: 'error',
-                            err:    err.code
-                        });
-                    }
-                    res.send({
-                        result: 'success',
-                        err:    '',
-                        json:   rows,
-                        length: rows.length
+                    console.error(err);
+                    cb({result: 'failure',
+                    err:'Sorry'
                     });
+                }
+                console.log('db success'+rows);
+                cb({
+                    result: 'success',
+                    err:    '',
+                    json:   rows
+                });
+                   
                     connection.release();
                 });
             }
-        });
+        });          
     }
+    
 };
 
 module.exports = volunteer_functions;
