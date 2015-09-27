@@ -1,0 +1,3 @@
+{	
+	"connectionString":"postgres://awsuser:#myCloud7@mydbinstance.ceu1yxehnwxm.us-west-2.rds.amazonaws.com:5432/mydb"
+}
